@@ -62,6 +62,7 @@ source erpnext_install.sh
 ```
 # Compatibility
 
+Ubuntu 25.04 LTS,
 Ubuntu 24.04 LTS,
 Ubuntu 23.04 LTS,
 Ubuntu 22.04 LTS,
