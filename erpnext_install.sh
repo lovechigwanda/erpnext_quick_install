@@ -11,6 +11,9 @@ handle_error() {
 trap 'handle_error $LINENO' ERR
 set -e
 
+# Ensure required tools are available
+sudo apt update -qq && sudo apt install -y bc lsb-release build-essential
+
 # Retrieve server IP
 server_ip=$(hostname -I | awk '{print $1}')
 
@@ -23,7 +26,6 @@ NC='\033[0m' # No Color
 
 # Checking Supported OS and distribution
 SUPPORTED_DISTRIBUTIONS=("Ubuntu" "Debian")
-SUPPORTED_VERSIONS=("25.04" "24.04" "23.04" "22.04" "20.04" "12" "11" "10" "9" "8")
 
 check_os() {
     local os_name=$(lsb_release -is)
@@ -38,20 +40,24 @@ check_os() {
         fi
     done
 
-    for i in "${SUPPORTED_VERSIONS[@]}"; do
-        if [[ "$i" = "$os_version" ]]; then
-            version_supported=true
-            break
-        fi
-    done
+    if [[ "$os_name" == "Ubuntu" && $(echo "$os_version >= 22.04" | bc -l) -eq 1 ]]; then
+        version_supported=true
+    elif [[ "$os_name" == "Debian" && $(echo "$os_version >= 10" | bc -l) -eq 1 ]]; then
+        version_supported=true
+    fi
 
-    if [[ "$os_supported" = false ]] || [[ "$version_supported" = false ]]; then
+    if [[ "$os_supported" = false || "$version_supported" = false ]]; then
         echo -e "${RED}This script is not compatible with your operating system or its version.${NC}"
         exit 1
     fi
 }
 
 check_os
+
+# Log output to file for diagnostics
+exec > >(tee -i erpnext_install_$(date +%Y%m%d_%H%M%S).log)
+exec 2>&1
+
 
 # Detect the platform (similar to $OSTYPE)
 OS="`uname`"
